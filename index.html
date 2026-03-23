@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Friend Video Call</title>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+}
+
+#videos{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+}
+
+video{
+width:300px;
+margin:10px;
+border-radius:10px;
+background:black;
+}
+
+input,button{
+padding:10px;
+margin:5px;
+font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📞 Friend Video Call</h1>
+
+<input id="room" placeholder="Room name">
+<button onclick="joinRoom()">Join Call</button>
+
+<div id="videos">
+<video id="myVideo" autoplay muted></video>
+</div>
+
+<script>
+
+let peer;
+let myStream;
+let peers = {};
+
+async function joinRoom(){
+
+const room = document.getElementById("room").value;
+
+myStream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
+});
+
+document.getElementById("myVideo").srcObject = myStream;
+
+peer = new Peer();
+
+peer.on("open", id=>{
+connect(room,id);
+});
+
+peer.on("call", call=>{
+call.answer(myStream);
+
+const video = document.createElement("video");
+
+call.on("stream", userVideoStream=>{
+video.srcObject = userVideoStream;
+video.autoplay = true;
+document.getElementById("videos").appendChild(video);
+});
+
+});
+
+}
+
+function connect(room,id){
+
+const url = location.href.split("?")[0] + "?room=" + room + "&peer=" + id;
+
+history.replaceState(null,null,url);
+
+const params = new URLSearchParams(window.location.search);
+
+const otherPeer = params.get("peer");
+
+if(otherPeer){
+
+const call = peer.call(otherPeer,myStream);
+
+const video = document.createElement("video");
+
+call.on("stream", userVideoStream=>{
+video.srcObject = userVideoStream;
+video.autoplay = true;
+document.getElementById("videos").appendChild(video);
+});
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
